@@ -297,6 +297,74 @@
   </style>
 </head>
 <body>
+  <div id="loginOverlay" style="
+position: fixed;
+inset: 0;
+background: rgb(30,25,50);
+display: flex;
+align-items: center;
+justify-content: center;
+z-index: 9999;
+font-family: Arial, sans-serif;
+">
+
+  <div style="
+  background: rgb(45,40,70);
+  padding: 40px;
+  border-radius: 18px;
+  width: 320px;
+  text-align: center;
+  color: rgb(242,242,242);
+  ">
+
+    <h1 style="margin-top:0;">ERETON</h1>
+
+    <p style="color: rgb(200,200,200);">
+      Enter access code
+    </p>
+
+    <input
+      type="password"
+      id="passwordInput"
+      placeholder="ide bele üsd a jelszót"
+      style="
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      margin-top: 10px;
+      margin-bottom: 14px;
+      font-size: 16px;
+      box-sizing: border-box;
+      "
+    >
+
+    <button
+      onclick="checkPassword()"
+      style="
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: rgb(250,180,45);
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+      "
+    >
+      ENTER
+    </button>
+
+    <p id="errorText" style="
+    color: tomato;
+    margin-top: 14px;
+    display: none;
+    ">
+      Wrong code
+    </p>
+
+  </div>
+</div>
   <header>
     <h1>GL41 Running Coach</h1>
     <p>Health · Activity · AI · Raspberry Pi státusz</p>
@@ -539,5 +607,29 @@
     makeLineChart('stepsWeeklyChart', 'Steps', weekLabels, [8200, 11840, 9400, 13200, 7600, 15400, 10900]);
     makeBarChart('stepsMonthlyChart', 'Avg daily steps', monthLabels, [9200, 9800, 10400, 11100, 10800]);
   </script>
+  <script>
+function checkPassword() {
+
+  const now = new Date();
+
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+
+  const expectedPassword = month + day + "gl41";
+
+  const enteredPassword =
+    document.getElementById("passwordInput").value;
+
+  if (enteredPassword === expectedPassword) {
+
+    document.getElementById("loginOverlay").style.display = "none";
+
+  } else {
+
+    document.getElementById("errorText").style.display = "block";
+
+  }
+}
+</script>
 </body>
 </html>
