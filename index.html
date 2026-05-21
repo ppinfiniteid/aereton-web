@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GL41 Running Coach Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: rgb(30,25,50);
+      --panel: rgb(38,33,60);
+      --panel-soft: rgb(48,43,72);
+      --text: rgb(255,255,255);
+      --text-soft: rgb(242,242,242);
+      --muted: rgb(200,200,200);
+      --muted-dark: rgb(120,120,120);
+      --accent: rgb(250,180,45);
+      --good: #22c55e;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+      --border: rgba(200,200,200,0.18);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 24px 32px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: -0.03em;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 20px;
+      padding: 20px 32px 32px;
+    }
+
+    nav {
+      background: rgba(15,23,42,0.75);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      height: fit-content;
+      position: sticky;
+      top: 16px;
+    }
+
+    nav button {
+      width: 100%;
+      display: block;
+      background: transparent;
+      color: var(--muted);
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      text-align: left;
+      font-size: 15px;
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+
+    nav button.active,
+    nav button:hover {
+      background: rgba(250,180,45,0.16);
+      color: var(--text);
+    }
+
+    main {
+      min-width: 0;
+    }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .card {
+      background: rgba(17,24,39,0.86);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    }
+
+    .kpi-title {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .kpi-value {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+
+    .kpi-note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    canvas {
+      max-height: 260px;
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+
+    h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+
+    .ai-box {
+      background: rgba(250,180,45,0.10);
+      border: 1px solid rgba(250,180,45,0.35);
+      border-radius: 16px;
+      padding: 16px;
+      color: var(--text-soft);
+      line-height: 1.5;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    button.primary,
+    button.secondary {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: rgb(30,25,50);
+    }
+
+    button.secondary {
+      background: var(--panel-soft);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .chat {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      height: 420px;
+    }
+
+    .chat-log {
+      flex: 1;
+      overflow-y: auto;
+      background: rgba(2,6,23,0.45);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .msg {
+      margin-bottom: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      max-width: 85%;
+      line-height: 1.4;
+      font-size: 14px;
+    }
+
+    .msg.user {
+      margin-left: auto;
+      background: rgba(250,180,45,0.22);
+    }
+
+    .msg.ai {
+      background: rgba(31,41,55,0.9);
+    }
+
+    .chat-input {
+      display: flex;
+      gap: 10px;
+    }
+
+    .chat-input input,
+    textarea,
+    select {
+      width: 100%;
+      background: rgba(2,6,23,0.7);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      font: inherit;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 10px 8px;
+      text-align: left;
+    }
+
+    th { color: var(--muted); font-weight: 600; }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    .dot.good { background: var(--good); }
+    .dot.warn { background: var(--warn); }
+    .dot.bad { background: var(--bad); }
+
+    pre {
+      background: rgba(2,6,23,0.65);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      overflow-x: auto;
+      color: #cbd5e1;
+      min-height: 260px;
+    }
+
+    @media (max-width: 950px) {
+      .layout { grid-template-columns: 1fr; padding: 16px; }
+      nav { position: static; }
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      .two-col { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .grid { grid-template-columns: 1fr; }
+      header { padding: 20px 16px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GL41 Running Coach</h1>
+    <p>Health · Activity · AI · Raspberry Pi státusz</p>
+  </header>
+
+  <div class="layout">
+    <nav>
+      <button class="active" data-section="health">Health</button>
+      <button data-section="activity">Activity</button>
+      <button data-section="activities">Activity Placeholder</button>
+      <button data-section="pi">PI status</button>
+    </nav>
+
+    <main>
+      <section id="health" class="section active">
+        <h2>Health overview</h2>
+        <div class="grid">
+          <div class="card">
+            <div class="kpi-title">Sleep</div>
+            <div class="kpi-value" id="sleepValue">7:18</div>
+            <div class="kpi-note">előző éjszaka</div>
+          </div>
+          <div class="card">
+            <div class="kpi-title">HRV</div>
+            <div class="kpi-value" id="hrvValue">42</div>
+            <div class="kpi-note">ms napi átlag</div>
+          </div>
+          <div class="card">
+            <div class="kpi-title">Resting HR</div>
+            <div class="kpi-value" id="rhrValue">54</div>
+            <div class="kpi-note">bpm</div>
+          </div>
+          <div class="card">
+            <div class="kpi-title">Steps</div>
+            <div class="kpi-value" id="stepsValue">11 840</div>
+            <div class="kpi-note">mai / tegnapi adat</div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <h3>AI heti trend-értékelés</h3>
+            <div class="ai-box" id="healthAiSummary">
+              A heti kép összességében stabil: a HRV enyhén javuló, a resting HR kontrollált, az alvás nem mutat nagy kilengést. A lépésszám aktív, de nem extrém. Ez inkább zöld-sárga jelzés: edzeni lehet, de az intenzív napokat továbbra is érdemes tudatosan adagolni.
+            </div>
+          </div>
+          <div class="card">
+            <h3>Mai rövid értékelés</h3>
+            <div class="ai-box">
+              Nincs piros zászló. Ha ma futás jön, easy vagy közepes terhelés racionálisabb, mint egy erőltetett minőségi edzés.
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-grid">
+          <div class="card"><h3>HRV · heti</h3><canvas id="hrvWeeklyChart"></canvas></div>
+          <div class="card"><h3>HRV · havi</h3><canvas id="hrvMonthlyChart"></canvas></div>
+          <div class="card"><h3>Resting HR · heti</h3><canvas id="rhrWeeklyChart"></canvas></div>
+          <div class="card"><h3>Resting HR · havi</h3><canvas id="rhrMonthlyChart"></canvas></div>
+          <div class="card"><h3>Sleep · heti</h3><canvas id="sleepWeeklyChart"></canvas></div>
+          <div class="card"><h3>Sleep · havi</h3><canvas id="sleepMonthlyChart"></canvas></div>
+          <div class="card"><h3>Steps · heti</h3><canvas id="stepsWeeklyChart"></canvas></div>
+          <div class="card"><h3>Steps · havi</h3><canvas id="stepsMonthlyChart"></canvas></div>
+        </div>
+      </section>
+
+      <section id="activity" class="section">
+        <h2>Activity AI chat</h2>
+        <div class="toolbar">
+          <button class="primary" onclick="simulateBotRun()">Utolsó activity betöltése</button>
+          <button class="secondary" onclick="simulateAnalysis()">AI elemzés indítása</button>
+        </div>
+
+        <div class="two-col">
+          <div class="card chat">
+            <h3>Chat az utolsó activity-ről</h3>
+            <div class="chat-log" id="chatLog">
+              <div class="msg ai">Szia Gábor. Töltsd be az utolsó activity-t, utána tudunk róla beszélni.</div>
+            </div>
+            <div class="chat-input">
+              <input id="chatInput" placeholder="Kérdezz az utolsó futásról..." onkeydown="handleEnter(event)" />
+              <button class="primary" onclick="sendChat()">Küldés</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Utolsó activity KPI</h3>
+            <table>
+              <tr><th>Metric</th><th>Value</th></tr>
+              <tr><td>Type</td><td id="actType">Run</td></tr>
+              <tr><td>Distance</td><td id="actDistance">10.02 km</td></tr>
+              <tr><td>Time</td><td id="actTime">48:44</td></tr>
+              <tr><td>Avg Pace</td><td id="actPace">4:52 / km</td></tr>
+              <tr><td>Avg HR</td><td id="actHr">146 bpm</td></tr>
+              <tr><td>Elevation</td><td id="actElev">72 m</td></tr>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="activities" class="section">
+        <h2>Activity Placeholder</h2>
+        <div class="card">
+          <h3>Utolsó activity-k</h3>
+          <table>
+            <thead>
+              <tr><th>Dátum</th><th>Típus</th><th>Táv</th><th>Pace / Avg</th><th>AI címke</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>2026-05-18</td><td>Run</td><td>10.0 km</td><td>4:52/km</td><td>stabil easy</td></tr>
+              <tr><td>2026-05-16</td><td>Bike</td><td>82.3 km</td><td>28.4 km/h</td><td>állóképességi blokk</td></tr>
+              <tr><td>2026-05-15</td><td>Swim</td><td>2000 m</td><td>—</td><td>technikai munka</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+          <h3>AI összegzés placeholder</h3>
+          <div class="ai-box">
+            Az utolsó pár activity alapján a terhelés kiegyensúlyozott, de a futás–úszás–bringázás kombináció miatt a regenerációt érdemes figyelni. Ez a blokk később Strava-exportból automatikusan tölthető.
+          </div>
+        </div>
+      </section>
+
+      <section id="pi" class="section">
+        <h2>Raspberry Pi status</h2>
+        <div class="two-col">
+          <div class="card">
+            <h3>Szolgáltatások</h3>
+            <div class="status-row"><span><span class="dot good"></span>gl41-bot.service</span><strong>running</strong></div>
+            <div class="status-row"><span><span class="dot good"></span>rclone-gdrive.service</span><strong>mounted</strong></div>
+            <div class="status-row"><span><span class="dot warn"></span>fitbit-health.timer</span><strong>next run pending</strong></div>
+            <div class="status-row"><span><span class="dot good"></span>Internet</span><strong>online</strong></div>
+          </div>
+
+          <div class="card">
+            <h3>PI gyors adatok</h3>
+            <table>
+              <tr><th>Metric</th><th>Value</th></tr>
+              <tr><td>CPU</td><td>18%</td></tr>
+              <tr><td>RAM</td><td>412 MB / 1 GB</td></tr>
+              <tr><td>Disk</td><td>43%</td></tr>
+              <tr><td>Uptime</td><td>3d 08h</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Fontos logok</h3>
+          <pre id="piLogs">2026-05-19 06:00 fitbit-health.service completed successfully
+2026-05-19 06:02 health_daily.csv merged
+2026-05-19 08:14 gl41-bot.service received /run command
+2026-05-19 08:15 Strava token refreshed
+2026-05-19 08:15 AI analysis completed</pre>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const sections = document.querySelectorAll('.section');
+    const buttons = document.querySelectorAll('nav button');
+
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        buttons.forEach(b => b.classList.remove('active'));
+        sections.forEach(s => s.classList.remove('active'));
+        button.classList.add('active');
+        document.getElementById(button.dataset.section).classList.add('active');
+      });
+    });
+
+    function addMessage(text, who = 'ai') {
+      const log = document.getElementById('chatLog');
+      const div = document.createElement('div');
+      div.className = `msg ${who}`;
+      div.textContent = text;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function sendChat() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      addMessage(text, 'user');
+      input.value = '';
+      addMessage('Demo válasz: ezt később a Pi-n futó API küldené vissza az OpenAI elemzésből és az utolsó Strava activity adataiból.', 'ai');
+    }
+
+    function handleEnter(event) {
+      if (event.key === 'Enter') sendChat();
+    }
+
+    function simulateBotRun() {
+      addMessage('Utolsó activity betöltve: 10.02 km futás, 4:52/km, avg HR 146.', 'ai');
+    }
+
+    function simulateAnalysis() {
+      addMessage('AI elemzés: kontrollált easy futás. A HR/pace arány rendben van, a végén az emelkedő miatt természetes a kis pulzusdrift.', 'ai');
+    }
+
+    const weekLabels = ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'];
+    const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May'];
+
+    const chartOptions = {
+      responsive: true,
+      plugins: { legend: { labels: { color: 'rgb(242,242,242)' } } },
+      scales: {
+        x: { ticks: { color: 'rgb(200,200,200)' }, grid: { color: 'rgba(200,200,200,0.10)' } },
+        y: { ticks: { color: 'rgb(200,200,200)' }, grid: { color: 'rgba(200,200,200,0.10)' } }
+      }
+    };
+
+    function makeLineChart(id, label, labels, data) {
+      new Chart(document.getElementById(id), {
+        type: 'line',
+        data: { labels, datasets: [{ label, data, tension: 0.35 }] },
+        options: chartOptions
+      });
+    }
+
+    function makeBarChart(id, label, labels, data) {
+      new Chart(document.getElementById(id), {
+        type: 'bar',
+        data: { labels, datasets: [{ label, data }] },
+        options: chartOptions
+      });
+    }
+
+    makeLineChart('hrvWeeklyChart', 'HRV ms', weekLabels, [39, 41, 40, 43, 42, 44, 42]);
+    makeBarChart('hrvMonthlyChart', 'Avg HRV ms', monthLabels, [38, 40, 40, 40, 42]);
+
+    makeLineChart('rhrWeeklyChart', 'Resting HR bpm', weekLabels, [55, 54, 55, 53, 54, 53, 54]);
+    makeBarChart('rhrMonthlyChart', 'Avg RHR bpm', monthLabels, [56, 55, 55, 54, 54]);
+
+    makeLineChart('sleepWeeklyChart', 'Sleep hours', weekLabels, [6.8, 7.1, 6.5, 7.4, 7.3, 8.0, 7.2]);
+    makeBarChart('sleepMonthlyChart', 'Avg sleep hours', monthLabels, [6.9, 7.0, 7.1, 7.0, 7.2]);
+
+    makeLineChart('stepsWeeklyChart', 'Steps', weekLabels, [8200, 11840, 9400, 13200, 7600, 15400, 10900]);
+    makeBarChart('stepsMonthlyChart', 'Avg daily steps', monthLabels, [9200, 9800, 10400, 11100, 10800]);
+  </script>
+</body>
+</html>
