@@ -3,633 +3,122 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GL41 Running Coach Dashboard</title>
+  <title>Aereton Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: rgb(30,25,50);
-      --panel: rgb(38,33,60);
-      --panel-soft: rgb(48,43,72);
-      --text: rgb(255,255,255);
-      --text-soft: rgb(242,242,242);
-      --muted: rgb(200,200,200);
-      --muted-dark: rgb(120,120,120);
-      --accent: rgb(250,180,45);
-      --good: #22c55e;
-      --warn: #f59e0b;
-      --bad: #ef4444;
-      --border: rgba(200,200,200,0.18);
+      --nav: #091720; --abyss: #0D1F2A; --card: #122533; --hover: #1A3040; --border: #1E3A4A;
+      --slate: #5B6E7A; --mist: #C8D8E0; --paper: #F0F2F4; --vermillion: #C8102E;
+      --jade: #2D9E7F; --caution: #E8D320; --caution-text: #0D1F2A;
     }
-
     * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    header {
-      padding: 24px 32px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 28px;
-      letter-spacing: -0.03em;
-    }
-
-    header p {
-      margin: 6px 0 0;
-      color: var(--muted);
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 240px 1fr;
-      gap: 20px;
-      padding: 20px 32px 32px;
-    }
-
-    nav {
-      background: rgba(15,23,42,0.75);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 14px;
-      height: fit-content;
-      position: sticky;
-      top: 16px;
-    }
-
-    nav button {
-      width: 100%;
-      display: block;
-      background: transparent;
-      color: var(--muted);
-      border: 0;
-      border-radius: 12px;
-      padding: 12px 14px;
-      text-align: left;
-      font-size: 15px;
-      cursor: pointer;
-      margin-bottom: 6px;
-    }
-
-    nav button.active,
-    nav button:hover {
-      background: rgba(250,180,45,0.16);
-      color: var(--text);
-    }
-
-    main {
-      min-width: 0;
-    }
-
-    .section { display: none; }
-    .section.active { display: block; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(150px, 1fr));
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-
-    .card {
-      background: rgba(17,24,39,0.86);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 18px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-    }
-
-    .kpi-title {
-      color: var(--muted);
-      font-size: 13px;
-      margin-bottom: 8px;
-    }
-
-    .kpi-value {
-      font-size: 30px;
-      font-weight: 700;
-      letter-spacing: -0.04em;
-    }
-
-    .kpi-note {
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 6px;
-    }
-
-    .two-col {
-      display: grid;
-      grid-template-columns: 1.4fr 1fr;
-      gap: 18px;
-      margin-bottom: 18px;
-    }
-
-    .chart-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(280px, 1fr));
-      gap: 18px;
-    }
-
-    canvas {
-      max-height: 260px;
-    }
-
-    h2 {
-      margin: 0 0 16px;
-      font-size: 22px;
-      letter-spacing: -0.02em;
-    }
-
-    h3 {
-      margin: 0 0 12px;
-      font-size: 16px;
-    }
-
-    .ai-box {
-      background: rgba(250,180,45,0.10);
-      border: 1px solid rgba(250,180,45,0.35);
-      border-radius: 16px;
-      padding: 16px;
-      color: var(--text-soft);
-      line-height: 1.5;
-    }
-
-    .toolbar {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
-    }
-
-    button.primary,
-    button.secondary {
-      border: 0;
-      border-radius: 12px;
-      padding: 11px 14px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    button.primary {
-      background: var(--accent);
-      color: rgb(30,25,50);
-    }
-
-    button.secondary {
-      background: var(--panel-soft);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    .chat {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      height: 420px;
-    }
-
-    .chat-log {
-      flex: 1;
-      overflow-y: auto;
-      background: rgba(2,6,23,0.45);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
-    }
-
-    .msg {
-      margin-bottom: 10px;
-      padding: 10px 12px;
-      border-radius: 12px;
-      max-width: 85%;
-      line-height: 1.4;
-      font-size: 14px;
-    }
-
-    .msg.user {
-      margin-left: auto;
-      background: rgba(250,180,45,0.22);
-    }
-
-    .msg.ai {
-      background: rgba(31,41,55,0.9);
-    }
-
-    .chat-input {
-      display: flex;
-      gap: 10px;
-    }
-
-    .chat-input input,
-    textarea,
-    select {
-      width: 100%;
-      background: rgba(2,6,23,0.7);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      font: inherit;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-
-    th, td {
-      border-bottom: 1px solid var(--border);
-      padding: 10px 8px;
-      text-align: left;
-    }
-
-    th { color: var(--muted); font-weight: 600; }
-
-    .status-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 8px;
-    }
-
-    .dot.good { background: var(--good); }
-    .dot.warn { background: var(--warn); }
-    .dot.bad { background: var(--bad); }
-
-    pre {
-      background: rgba(2,6,23,0.65);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
-      overflow-x: auto;
-      color: #cbd5e1;
-      min-height: 260px;
-    }
-
-    @media (max-width: 950px) {
-      .layout { grid-template-columns: 1fr; padding: 16px; }
-      nav { position: static; }
-      .grid { grid-template-columns: repeat(2, 1fr); }
-      .two-col { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 560px) {
-      .grid { grid-template-columns: 1fr; }
-      header { padding: 20px 16px 10px; }
-    }
+    body { margin:0; min-height:100vh; background:radial-gradient(circle at 0% 0%, rgba(200,216,224,.08), transparent 28%), radial-gradient(circle at 100% 100%, rgba(45,158,127,.05), transparent 30%), var(--abyss); color:var(--paper); font-family:"Inter", system-ui, sans-serif; }
+    #loginOverlay { position:fixed; inset:0; background:radial-gradient(circle at 0% 0%, rgba(200,216,224,.08), transparent 28%), linear-gradient(180deg,#091720 0%,#0D1F2A 100%); display:flex; align-items:center; justify-content:center; z-index:9999; padding:24px; }
+    .login-wrap { width:min(520px,100%); text-align:center; }
+    .login-logo { width:min(360px,82vw); display:block; margin:0 auto 18px; }
+    .login-tagline { margin:0 0 40px; font-family:"DM Mono", monospace; color:var(--mist); font-size:16px; letter-spacing:-.02em; }
+    .login-tagline .dot { color:var(--vermillion); }
+    .login-panel { background:rgba(18,37,51,.90); border:1px solid rgba(200,216,224,.18); border-radius:12px; padding:40px; box-shadow:0 28px 80px rgba(0,0,0,.35); }
+    .ae-login { width:120px; display:block; margin:0 auto 24px; }
+    .login-panel label { display:block; margin-bottom:16px; color:var(--mist); font-size:15px; }
+    .input-row { position:relative; margin-bottom:16px; }
+    .login-panel input { width:100%; border:1px solid rgba(200,216,224,.34); border-radius:4px; padding:14px 44px 14px 14px; font:inherit; background:rgba(9,23,32,.72); color:var(--paper); outline:none; }
+    .login-panel input:focus { border-color:var(--mist); }
+    .key-symbol { position:absolute; right:14px; top:50%; transform:translateY(-50%); color:var(--mist); font-size:18px; pointer-events:none; }
+    .btn { border:1px solid var(--border); border-radius:4px; padding:12px 14px; font-weight:700; cursor:pointer; background:transparent; color:var(--paper); font:inherit; }
+    .btn.primary { width:100%; background:linear-gradient(180deg,#C8102E,#A80E27); color:white; border-color:var(--vermillion); }
+    .btn.secondary:hover { background:var(--hover); }
+    #errorText { display:none; margin:16px 0 0; font-family:"DM Mono", monospace; font-size:13px; color:var(--vermillion); text-align:left; }
+    .login-footer { margin-top:32px; font-family:"DM Mono", monospace; color:var(--mist); font-size:13px; text-align:left; line-height:1.55; }
+    .app { min-height:100vh; display:grid; grid-template-columns:220px 1fr; }
+    .sidebar { background:rgba(9,23,32,.92); border-right:1px solid rgba(200,216,224,.16); padding:32px 24px; display:flex; flex-direction:column; justify-content:space-between; }
+    .sidebar-logo { width:86px; margin-bottom:40px; }
+    nav button { width:100%; display:flex; align-items:center; gap:10px; border:0; border-radius:4px; background:transparent; color:var(--mist); text-align:left; padding:12px; margin-bottom:6px; cursor:pointer; font:inherit; position:relative; }
+    nav button.active, nav button:hover { background:rgba(200,216,224,.08); color:var(--paper); }
+    nav button.active::before { content:""; position:absolute; left:0; top:8px; bottom:8px; width:3px; background:var(--vermillion); border-radius:2px; }
+    .sidebar-note { font-family:"DM Mono", monospace; color:var(--mist); font-size:12px; line-height:1.55; border-top:1px solid rgba(200,216,224,.14); padding-top:24px; }
+    .content { min-width:0; padding:40px 48px 48px; }
+    header { display:flex; justify-content:space-between; align-items:flex-start; gap:24px; margin-bottom:32px; }
+    .eyebrow { font-family:"DM Mono", monospace; color:var(--mist); font-size:13px; margin-bottom:6px; }
+    h1,h2,h3,p { margin-top:0; } h1 { margin-bottom:8px; font-size:38px; letter-spacing:-.05em; line-height:1; } h2 { margin-bottom:24px; font-size:26px; letter-spacing:-.03em; } h3 { font-size:16px; margin-bottom:16px; }
+    .comment { font-family:"DM Mono", monospace; color:var(--mist); font-size:13px; }
+    .top-status { display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(200,216,224,.16); border-radius:4px; padding:10px 12px; font-family:"DM Mono", monospace; font-size:12px; color:var(--mist); background:rgba(18,37,51,.70); white-space:nowrap; }
+    .dot { width:8px; height:8px; border-radius:50%; display:inline-block; } .dot.ok{background:var(--jade)} .dot.warn{background:var(--caution)} .dot.err{background:var(--vermillion)}
+    .section { display:none; } .section.active{display:block;}
+    .grid-kpi { display:grid; grid-template-columns:repeat(4,minmax(150px,1fr)); gap:24px; margin-bottom:32px; }
+    .card { background:rgba(18,37,51,.88); border:1px solid rgba(200,216,224,.16); border-radius:8px; padding:24px; box-shadow:0 18px 50px rgba(0,0,0,.18); }
+    .kpi-title { color:var(--mist); font-size:14px; margin-bottom:12px; } .kpi-value { font-size:32px; line-height:1; font-weight:700; letter-spacing:-.04em; } .kpi-note { margin-top:10px; font-family:"DM Mono", monospace; color:var(--slate); font-size:12px; }
+    .two-col { display:grid; grid-template-columns:1.3fr 1fr; gap:24px; margin-bottom:32px; } .chart-grid { display:grid; grid-template-columns:repeat(2,minmax(280px,1fr)); gap:24px; } canvas{max-height:250px;}
+    .ai-box { background:rgba(18,37,51,.88); border:1px solid rgba(200,216,224,.16); border-left:3px solid var(--vermillion); border-radius:8px; padding:24px; line-height:1.55; }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+    .chat { display:flex; flex-direction:column; min-height:420px; } .chat-log { flex:1; overflow-y:auto; border:1px solid rgba(200,216,224,.16); border-radius:8px; padding:16px; background:rgba(9,23,32,.48); margin-bottom:12px; }
+    .msg { max-width:86%; padding:10px 12px; border-radius:8px; margin-bottom:10px; line-height:1.45; font-size:14px; } .msg.ai{background:var(--card); color:var(--paper); border:1px solid rgba(200,216,224,.12)} .msg.user{margin-left:auto; background:var(--vermillion); color:white;}
+    .chat-input { display:flex; gap:8px; } .chat-input input { width:100%; border:1px solid rgba(200,216,224,.22); background:rgba(9,23,32,.70); color:var(--paper); border-radius:4px; padding:12px; font:inherit; }
+    table { width:100%; border-collapse:collapse; font-size:14px; } th,td { border-bottom:1px solid rgba(200,216,224,.12); padding:12px 0; text-align:left; } th { color:var(--mist); font-family:"DM Mono", monospace; font-size:12px; font-weight:400; }
+    .badge { display:inline-flex; align-items:center; gap:5px; border-radius:2px; padding:4px 7px; font-family:"DM Mono", monospace; font-size:11px; line-height:1; } .badge.live{background:var(--jade); color:white;} .badge.pending{background:var(--caution); color:var(--caution-text);} .badge.error{background:var(--vermillion); color:white;}
+    .status-row { display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid rgba(200,216,224,.12); }
+    pre { background:rgba(9,23,32,.64); border:1px solid rgba(200,216,224,.16); border-radius:8px; padding:16px; overflow-x:auto; color:var(--mist); min-height:260px; font-family:"DM Mono", monospace; font-size:12px; line-height:1.6; }
+    .footer { margin-top:48px; padding-top:24px; border-top:1px solid rgba(200,216,224,.12); text-align:center; font-family:"DM Mono", monospace; color:var(--mist); font-size:12px; }
+    @media (max-width:980px){ .app{grid-template-columns:1fr;} .sidebar{position:static; padding:20px 24px;} .sidebar-top{display:flex; align-items:center; gap:24px;} .sidebar-logo{margin:0;} nav{display:flex; gap:8px; overflow-x:auto;} nav button{white-space:nowrap;} .sidebar-note{display:none;} .content{padding:32px 24px;} .grid-kpi{grid-template-columns:repeat(2,1fr);} .two-col{grid-template-columns:1fr;} .chart-grid{grid-template-columns:1fr;} }
+    @media (max-width:560px){ .content{padding:24px 16px;} header{flex-direction:column;} .grid-kpi{grid-template-columns:1fr;} .chat-input{flex-direction:column;} .login-panel{padding:28px;} }
   </style>
 </head>
 <body>
-  <div id="loginOverlay" style="
-position: fixed;
-inset: 0;
-background: rgb(30,25,50);
-display: flex;
-align-items: center;
-justify-content: center;
-z-index: 9999;
-font-family: Arial, sans-serif;
-">
-
-  <div style="
-  background: rgb(45,40,70);
-  padding: 40px;
-  border-radius: 18px;
-  width: 320px;
-  text-align: center;
-  color: rgb(242,242,242);
-  ">
-
-    <h1 style="margin-top:0;">AERETON</h1>
-
-    <p style="color: rgb(200,200,200);">
-      Enter access code
-    </p>
-
-    <input
-      type="password"
-      id="passwordInput"
-      placeholder="ide bele üsd a jelszót"
-      style="
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: none;
-      margin-top: 10px;
-      margin-bottom: 14px;
-      font-size: 16px;
-      box-sizing: border-box;
-      "
-    >
-
-    <button
-      onclick="checkPassword()"
-      style="
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      background: rgb(250,180,45);
-      color: black;
-      font-weight: bold;
-      cursor: pointer;
-      "
-    >
-      ENTER
-    </button>
-
-    <p id="errorText" style="
-    color: tomato;
-    margin-top: 14px;
-    display: none;
-    ">
-      Wrong code
-    </p>
-
+  <div id="loginOverlay">
+    <div class="login-wrap">
+      <img class="login-logo" src="AERETON_darkBG_logo.png" alt="Aereton logo">
+      <p class="login-tagline">Quietly getting things done<span class="dot">.</span></p>
+      <div class="login-panel">
+        <img class="ae-login" src="AE_darkBG.png" alt="Aereton AE mark">
+        <label for="passwordInput">Enter access code</label>
+        <div class="input-row"><input type="password" id="passwordInput" placeholder="ide bele üsd a jelszót" onkeydown="handleLoginEnter(event)" /><span class="key-symbol">⌘</span></div>
+        <button class="btn primary" onclick="checkPassword()">ENTER →</button>
+        <p id="errorText">// wrong code. impressive, but not useful.</p>
+      </div>
+      <div class="login-footer">// if you're not supposed to be here,<br>this probably won't help.</div>
+    </div>
   </div>
-</div>
-  <header>
-    <h1>GL41 Running Coach</h1>
-    <p>Health · Activity · AI · Raspberry Pi státusz</p>
-  </header>
 
-  <div class="layout">
-    <nav>
-      <button class="active" data-section="health">Health</button>
-      <button data-section="activity">Activity</button>
-      <button data-section="activities">Activity Placeholder</button>
-      <button data-section="pi">PI status</button>
-    </nav>
-
-    <main>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-top"><img class="sidebar-logo" src="AE_darkBG.png" alt="Aereton AE mark"><nav><button class="active" data-section="health">Health</button><button data-section="activity">Activity</button><button data-section="activities">Recent</button><button data-section="pi">PI status</button></nav></div>
+      <div class="sidebar-note">// it works.<br>not perfect,<br>but it works.<br><span style="color: var(--vermillion);">_</span></div>
+    </aside>
+    <main class="content">
+      <header><div><div class="eyebrow">Dashboard</div><h1>Health overview</h1><div class="comment">// quietly getting things done. mostly by cron.</div></div><div class="top-status">ALL SYSTEMS <strong style="color: var(--jade);">OK</strong><span class="dot ok"></span></div></header>
       <section id="health" class="section active">
-        <h2>Health overview</h2>
-        <div class="grid">
-          <div class="card">
-            <div class="kpi-title">Sleep</div>
-            <div class="kpi-value" id="sleepValue">7:18</div>
-            <div class="kpi-note">előző éjszaka</div>
-          </div>
-          <div class="card">
-            <div class="kpi-title">HRV</div>
-            <div class="kpi-value" id="hrvValue">42</div>
-            <div class="kpi-note">ms napi átlag</div>
-          </div>
-          <div class="card">
-            <div class="kpi-title">Resting HR</div>
-            <div class="kpi-value" id="rhrValue">54</div>
-            <div class="kpi-note">bpm</div>
-          </div>
-          <div class="card">
-            <div class="kpi-title">Steps</div>
-            <div class="kpi-value" id="stepsValue">11 840</div>
-            <div class="kpi-note">mai / tegnapi adat</div>
-          </div>
-        </div>
-
-        <div class="two-col">
-          <div class="card">
-            <h3>AI heti trend-értékelés</h3>
-            <div class="ai-box" id="healthAiSummary">
-              A heti kép összességében stabil: a HRV enyhén javuló, a resting HR kontrollált, az alvás nem mutat nagy kilengést. A lépésszám aktív, de nem extrém. Ez inkább zöld-sárga jelzés: edzeni lehet, de az intenzív napokat továbbra is érdemes tudatosan adagolni.
-            </div>
-          </div>
-          <div class="card">
-            <h3>Mai rövid értékelés</h3>
-            <div class="ai-box">
-              Nincs piros zászló. Ha ma futás jön, easy vagy közepes terhelés racionálisabb, mint egy erőltetett minőségi edzés.
-            </div>
-          </div>
-        </div>
-
-        <div class="chart-grid">
-          <div class="card"><h3>HRV · heti</h3><canvas id="hrvWeeklyChart"></canvas></div>
-          <div class="card"><h3>HRV · havi</h3><canvas id="hrvMonthlyChart"></canvas></div>
-          <div class="card"><h3>Resting HR · heti</h3><canvas id="rhrWeeklyChart"></canvas></div>
-          <div class="card"><h3>Resting HR · havi</h3><canvas id="rhrMonthlyChart"></canvas></div>
-          <div class="card"><h3>Sleep · heti</h3><canvas id="sleepWeeklyChart"></canvas></div>
-          <div class="card"><h3>Sleep · havi</h3><canvas id="sleepMonthlyChart"></canvas></div>
-          <div class="card"><h3>Steps · heti</h3><canvas id="stepsWeeklyChart"></canvas></div>
-          <div class="card"><h3>Steps · havi</h3><canvas id="stepsMonthlyChart"></canvas></div>
-        </div>
+        <div class="grid-kpi"><div class="card"><div class="kpi-title">Sleep</div><div class="kpi-value">7:18</div><div class="kpi-note">previous night</div></div><div class="card"><div class="kpi-title">HRV</div><div class="kpi-value">42</div><div class="kpi-note">ms daily avg</div></div><div class="card"><div class="kpi-title">Resting HR</div><div class="kpi-value">54</div><div class="kpi-note">bpm</div></div><div class="card"><div class="kpi-title">Steps</div><div class="kpi-value">11 840</div><div class="kpi-note">today / latest</div></div></div>
+        <div class="two-col"><div class="ai-box"><div class="comment">// weekly trend</div><br>A heti kép stabil: HRV enyhén javuló, resting HR kontrollált, az alvás nem mutat nagy kilengést. Edzeni lehet, rekordot erőltetni nem kötelező.</div><div class="ai-box"><div class="comment">// today</div><br>Nincs piros zászló. Easy vagy közepes terhelés racionálisabb, mint egy hirtelen ötletből elkövetett hőstett.</div></div>
+        <div class="chart-grid"><div class="card"><h3>HRV · weekly</h3><canvas id="hrvWeeklyChart"></canvas></div><div class="card"><h3>HRV · monthly</h3><canvas id="hrvMonthlyChart"></canvas></div><div class="card"><h3>Resting HR · weekly</h3><canvas id="rhrWeeklyChart"></canvas></div><div class="card"><h3>Resting HR · monthly</h3><canvas id="rhrMonthlyChart"></canvas></div><div class="card"><h3>Sleep · weekly</h3><canvas id="sleepWeeklyChart"></canvas></div><div class="card"><h3>Sleep · monthly</h3><canvas id="sleepMonthlyChart"></canvas></div><div class="card"><h3>Steps · weekly</h3><canvas id="stepsWeeklyChart"></canvas></div><div class="card"><h3>Steps · monthly</h3><canvas id="stepsMonthlyChart"></canvas></div></div>
       </section>
-
-      <section id="activity" class="section">
-        <h2>Activity AI chat</h2>
-        <div class="toolbar">
-          <button class="primary" onclick="simulateBotRun()">Utolsó activity betöltése</button>
-          <button class="secondary" onclick="simulateAnalysis()">AI elemzés indítása</button>
-        </div>
-
-        <div class="two-col">
-          <div class="card chat">
-            <h3>Chat az utolsó activity-ről</h3>
-            <div class="chat-log" id="chatLog">
-              <div class="msg ai">Szia Gábor. Töltsd be az utolsó activity-t, utána tudunk róla beszélni.</div>
-            </div>
-            <div class="chat-input">
-              <input id="chatInput" placeholder="Kérdezz az utolsó futásról..." onkeydown="handleEnter(event)" />
-              <button class="primary" onclick="sendChat()">Küldés</button>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3>Utolsó activity KPI</h3>
-            <table>
-              <tr><th>Metric</th><th>Value</th></tr>
-              <tr><td>Type</td><td id="actType">Run</td></tr>
-              <tr><td>Distance</td><td id="actDistance">10.02 km</td></tr>
-              <tr><td>Time</td><td id="actTime">48:44</td></tr>
-              <tr><td>Avg Pace</td><td id="actPace">4:52 / km</td></tr>
-              <tr><td>Avg HR</td><td id="actHr">146 bpm</td></tr>
-              <tr><td>Elevation</td><td id="actElev">72 m</td></tr>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <section id="activities" class="section">
-        <h2>Activity Placeholder</h2>
-        <div class="card">
-          <h3>Utolsó activity-k</h3>
-          <table>
-            <thead>
-              <tr><th>Dátum</th><th>Típus</th><th>Táv</th><th>Pace / Avg</th><th>AI címke</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>2026-05-18</td><td>Run</td><td>10.0 km</td><td>4:52/km</td><td>stabil easy</td></tr>
-              <tr><td>2026-05-16</td><td>Bike</td><td>82.3 km</td><td>28.4 km/h</td><td>állóképességi blokk</td></tr>
-              <tr><td>2026-05-15</td><td>Swim</td><td>2000 m</td><td>—</td><td>technikai munka</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="card" style="margin-top:18px;">
-          <h3>AI összegzés placeholder</h3>
-          <div class="ai-box">
-            Az utolsó pár activity alapján a terhelés kiegyensúlyozott, de a futás–úszás–bringázás kombináció miatt a regenerációt érdemes figyelni. Ez a blokk később Strava-exportból automatikusan tölthető.
-          </div>
-        </div>
-      </section>
-
-      <section id="pi" class="section">
-        <h2>Raspberry Pi status</h2>
-        <div class="two-col">
-          <div class="card">
-            <h3>Szolgáltatások</h3>
-            <div class="status-row"><span><span class="dot good"></span>gl41-bot.service</span><strong>running</strong></div>
-            <div class="status-row"><span><span class="dot good"></span>rclone-gdrive.service</span><strong>mounted</strong></div>
-            <div class="status-row"><span><span class="dot warn"></span>fitbit-health.timer</span><strong>next run pending</strong></div>
-            <div class="status-row"><span><span class="dot good"></span>Internet</span><strong>online</strong></div>
-          </div>
-
-          <div class="card">
-            <h3>PI gyors adatok</h3>
-            <table>
-              <tr><th>Metric</th><th>Value</th></tr>
-              <tr><td>CPU</td><td>18%</td></tr>
-              <tr><td>RAM</td><td>412 MB / 1 GB</td></tr>
-              <tr><td>Disk</td><td>43%</td></tr>
-              <tr><td>Uptime</td><td>3d 08h</td></tr>
-            </table>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Fontos logok</h3>
-          <pre id="piLogs">2026-05-19 06:00 fitbit-health.service completed successfully
+      <section id="activity" class="section"><h2>Activity AI chat</h2><div class="toolbar"><button class="btn primary" onclick="simulateBotRun()">Load latest activity</button><button class="btn secondary" onclick="simulateAnalysis()">Run AI analysis</button></div><div class="two-col"><div class="card chat"><h3>Latest activity chat</h3><div class="chat-log" id="chatLog"><div class="msg ai">Everything's in place. Or close enough. Load the latest activity and we pretend this is already wired to the Pi.</div></div><div class="chat-input"><input id="chatInput" placeholder="Ask about the latest run..." onkeydown="handleEnter(event)" /><button class="btn primary" onclick="sendChat()">Send</button></div></div><div class="card"><h3>Latest activity KPI</h3><table><tr><th>metric</th><th>value</th></tr><tr><td>type</td><td>Run</td></tr><tr><td>distance</td><td>10.02 km</td></tr><tr><td>time</td><td>48:44</td></tr><tr><td>avg pace</td><td>4:52 / km</td></tr><tr><td>avg hr</td><td>146 bpm</td></tr><tr><td>elevation</td><td>72 m</td></tr></table></div></div></section>
+      <section id="activities" class="section"><h2>Recent activities</h2><div class="card"><table><thead><tr><th>date</th><th>type</th><th>distance</th><th>pace / avg</th><th>AI label</th></tr></thead><tbody><tr><td>2026-05-18</td><td>Run</td><td>10.0 km</td><td>4:52/km</td><td><span class="badge live">OK</span> stable easy</td></tr><tr><td>2026-05-16</td><td>Bike</td><td>82.3 km</td><td>28.4 km/h</td><td><span class="badge pending">PENDING</span> endurance block</td></tr><tr><td>2026-05-15</td><td>Swim</td><td>2000 m</td><td>—</td><td><span class="badge live">OK</span> technical work</td></tr></tbody></table></div><div class="ai-box" style="margin-top:24px;"><div class="comment">// placeholder, but at least honest</div><br>Az utolsó pár activity alapján a terhelés kiegyensúlyozott. A következő verzióban ezt már Strava exportból kell etetni, nem kézzel írt színjátékkal.</div></section>
+      <section id="pi" class="section"><h2>Raspberry Pi status</h2><div class="two-col"><div class="card"><h3>Services</h3><div class="status-row"><span>gl41-bot.service</span><span class="badge live">LIVE</span></div><div class="status-row"><span>rclone-gdrive.service</span><span class="badge live">OK</span></div><div class="status-row"><span>fitbit-health.timer</span><span class="badge pending">PENDING</span></div><div class="status-row"><span>internet</span><span class="badge error">ERROR</span></div></div><div class="card"><h3>Pi quick data</h3><table><tr><th>metric</th><th>value</th></tr><tr><td>CPU</td><td>18%</td></tr><tr><td>RAM</td><td>412 MB / 1 GB</td></tr><tr><td>Disk</td><td>43%</td></tr><tr><td>Uptime</td><td>3d 08h</td></tr></table></div></div><div class="card"><h3>Important logs</h3><pre>2026-05-19 06:00 fitbit-health.service completed successfully
 2026-05-19 06:02 health_daily.csv merged
 2026-05-19 08:14 gl41-bot.service received /run command
 2026-05-19 08:15 Strava token refreshed
-2026-05-19 08:15 AI analysis completed</pre>
-        </div>
-      </section>
+2026-05-19 08:15 done. 1247 rows. 3 were odd. worth a look.</pre></div></section>
+      <div class="footer">© 2026 Aereton · Quietly getting things done.</div>
     </main>
   </div>
-
   <script>
-    const sections = document.querySelectorAll('.section');
-    const buttons = document.querySelectorAll('nav button');
-
-    buttons.forEach(button => {
-      button.addEventListener('click', () => {
-        buttons.forEach(b => b.classList.remove('active'));
-        sections.forEach(s => s.classList.remove('active'));
-        button.classList.add('active');
-        document.getElementById(button.dataset.section).classList.add('active');
-      });
-    });
-
-    function addMessage(text, who = 'ai') {
-      const log = document.getElementById('chatLog');
-      const div = document.createElement('div');
-      div.className = `msg ${who}`;
-      div.textContent = text;
-      log.appendChild(div);
-      log.scrollTop = log.scrollHeight;
-    }
-
-    function sendChat() {
-      const input = document.getElementById('chatInput');
-      const text = input.value.trim();
-      if (!text) return;
-      addMessage(text, 'user');
-      input.value = '';
-      addMessage('Demo válasz: ezt később a Pi-n futó API küldené vissza az OpenAI elemzésből és az utolsó Strava activity adataiból.', 'ai');
-    }
-
-    function handleEnter(event) {
-      if (event.key === 'Enter') sendChat();
-    }
-
-    function simulateBotRun() {
-      addMessage('Utolsó activity betöltve: 10.02 km futás, 4:52/km, avg HR 146.', 'ai');
-    }
-
-    function simulateAnalysis() {
-      addMessage('AI elemzés: kontrollált easy futás. A HR/pace arány rendben van, a végén az emelkedő miatt természetes a kis pulzusdrift.', 'ai');
-    }
-
-    const weekLabels = ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'];
-    const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May'];
-
-    const chartOptions = {
-      responsive: true,
-      plugins: { legend: { labels: { color: 'rgb(242,242,242)' } } },
-      scales: {
-        x: { ticks: { color: 'rgb(200,200,200)' }, grid: { color: 'rgba(200,200,200,0.10)' } },
-        y: { ticks: { color: 'rgb(200,200,200)' }, grid: { color: 'rgba(200,200,200,0.10)' } }
-      }
-    };
-
-    function makeLineChart(id, label, labels, data) {
-      new Chart(document.getElementById(id), {
-        type: 'line',
-        data: { labels, datasets: [{ label, data, tension: 0.35 }] },
-        options: chartOptions
-      });
-    }
-
-    function makeBarChart(id, label, labels, data) {
-      new Chart(document.getElementById(id), {
-        type: 'bar',
-        data: { labels, datasets: [{ label, data }] },
-        options: chartOptions
-      });
-    }
-
-    makeLineChart('hrvWeeklyChart', 'HRV ms', weekLabels, [39, 41, 40, 43, 42, 44, 42]);
-    makeBarChart('hrvMonthlyChart', 'Avg HRV ms', monthLabels, [38, 40, 40, 40, 42]);
-
-    makeLineChart('rhrWeeklyChart', 'Resting HR bpm', weekLabels, [55, 54, 55, 53, 54, 53, 54]);
-    makeBarChart('rhrMonthlyChart', 'Avg RHR bpm', monthLabels, [56, 55, 55, 54, 54]);
-
-    makeLineChart('sleepWeeklyChart', 'Sleep hours', weekLabels, [6.8, 7.1, 6.5, 7.4, 7.3, 8.0, 7.2]);
-    makeBarChart('sleepMonthlyChart', 'Avg sleep hours', monthLabels, [6.9, 7.0, 7.1, 7.0, 7.2]);
-
-    makeLineChart('stepsWeeklyChart', 'Steps', weekLabels, [8200, 11840, 9400, 13200, 7600, 15400, 10900]);
-    makeBarChart('stepsMonthlyChart', 'Avg daily steps', monthLabels, [9200, 9800, 10400, 11100, 10800]);
+    function checkPassword(){ const now=new Date(); const month=String(now.getMonth()+1).padStart(2,'0'); const day=String(now.getDate()).padStart(2,'0'); const expectedPassword=month+day+"gl41"; const enteredPassword=document.getElementById("passwordInput").value; if(enteredPassword===expectedPassword){document.getElementById("loginOverlay").style.display="none";}else{document.getElementById("errorText").style.display="block";} }
+    function handleLoginEnter(event){ if(event.key==="Enter") checkPassword(); }
+    const sections=document.querySelectorAll('.section'); const buttons=document.querySelectorAll('nav button');
+    buttons.forEach(button=>{button.addEventListener('click',()=>{buttons.forEach(b=>b.classList.remove('active')); sections.forEach(s=>s.classList.remove('active')); button.classList.add('active'); document.getElementById(button.dataset.section).classList.add('active'); const title=document.querySelector('main.content h1'); const map={health:'Health overview',activity:'Activity AI chat',activities:'Recent activities',pi:'Raspberry Pi status'}; title.textContent=map[button.dataset.section]||'Dashboard';});});
+    function addMessage(text,who='ai'){const log=document.getElementById('chatLog'); const div=document.createElement('div'); div.className=`msg ${who}`; div.textContent=text; log.appendChild(div); log.scrollTop=log.scrollHeight;}
+    function sendChat(){const input=document.getElementById('chatInput'); const text=input.value.trim(); if(!text)return; addMessage(text,'user'); input.value=''; addMessage('demo answer: the Pi is not connected yet. bold architecture, limited wiring.','ai');}
+    function handleEnter(event){if(event.key==='Enter')sendChat();}
+    function simulateBotRun(){addMessage('latest activity loaded: 10.02 km run, 4:52/km, avg HR 146. suspiciously neat.','ai');}
+    function simulateAnalysis(){addMessage('AI analysis: controlled easy run. HR/pace ratio is fine. No heroics required.','ai');}
+    const weekLabels=['Mon','Tue','Wed','Thu','Fri','Sat','Sun']; const monthLabels=['Jan','Feb','Mar','Apr','May'];
+    const chartOptions={responsive:true,plugins:{legend:{labels:{color:'#C8D8E0',font:{family:'DM Mono',size:11}}}},scales:{x:{ticks:{color:'#C8D8E0',font:{family:'DM Mono',size:11}},grid:{color:'rgba(200,216,224,0.08)'}},y:{ticks:{color:'#C8D8E0',font:{family:'DM Mono',size:11}},grid:{color:'rgba(200,216,224,0.08)'}}}};
+    function makeLineChart(id,label,labels,data){new Chart(document.getElementById(id),{type:'line',data:{labels,datasets:[{label,data,borderColor:'#C8D8E0',backgroundColor:'rgba(200,216,224,0.10)',pointBackgroundColor:'#F0F2F4',pointBorderColor:'#C8D8E0',tension:0.28}]},options:chartOptions});}
+    function makeBarChart(id,label,labels,data){new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{label,data,backgroundColor:'rgba(200,216,224,0.76)',borderColor:'#C8D8E0',borderWidth:1}]},options:chartOptions});}
+    makeLineChart('hrvWeeklyChart','HRV ms',weekLabels,[39,41,40,43,42,44,42]); makeBarChart('hrvMonthlyChart','Avg HRV ms',monthLabels,[38,40,40,40,42]); makeLineChart('rhrWeeklyChart','Resting HR bpm',weekLabels,[55,54,55,53,54,53,54]); makeBarChart('rhrMonthlyChart','Avg RHR bpm',monthLabels,[56,55,55,54,54]); makeLineChart('sleepWeeklyChart','Sleep hours',weekLabels,[6.8,7.1,6.5,7.4,7.3,8.0,7.2]); makeBarChart('sleepMonthlyChart','Avg sleep hours',monthLabels,[6.9,7.0,7.1,7.0,7.2]); makeLineChart('stepsWeeklyChart','Steps',weekLabels,[8200,11840,9400,13200,7600,15400,10900]); makeBarChart('stepsMonthlyChart','Avg daily steps',monthLabels,[9200,9800,10400,11100,10800]);
   </script>
-  <script>
-function checkPassword() {
-
-  const now = new Date();
-
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-
-  const expectedPassword = month + day + "gl41";
-
-  const enteredPassword =
-    document.getElementById("passwordInput").value;
-
-  if (enteredPassword === expectedPassword) {
-
-    document.getElementById("loginOverlay").style.display = "none";
-
-  } else {
-
-    document.getElementById("errorText").style.display = "block";
-
-  }
-}
-</script>
 </body>
 </html>
